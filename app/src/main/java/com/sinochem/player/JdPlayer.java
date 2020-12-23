@@ -50,7 +50,7 @@ public class JdPlayer implements SurfaceHolder.Callback {
      * 准备好 要播放的视频
      */
     public void prepare() {
-//        native_prepare(dataSource);
+        native_prepare(dataSource);
     }
 
 
@@ -90,6 +90,6 @@ public class JdPlayer implements SurfaceHolder.Callback {
     }
 
 
-//    native void native_prepare(String dataSource);
+    native void native_prepare(String dataSource);
 
 }
