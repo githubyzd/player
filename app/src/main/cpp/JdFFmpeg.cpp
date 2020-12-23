@@ -98,9 +98,10 @@ void JdFFmpeg::_prepare() {
         }
         //音频
         if (codecParameters->codec_type == AVMEDIA_TYPE_AUDIO) {
-            audioChannel = new AudioChannel;
+            audioChannel = new AudioChannel(0, context);
         } else if (codecParameters->codec_type == AVMEDIA_TYPE_VIDEO) {
-            videoChannel = new VideoChannel;
+            videoChannel = new VideoChannel(i, context);
+            videoChannel->setRenderFrameCallback(callback);
         }
     }
 
@@ -113,4 +114,49 @@ void JdFFmpeg::_prepare() {
 
     //准备完了  通知java
     callHelper->onPrepare(THREAD_CHILD);
+}
+
+void *task_play(void *args) {
+    JdFFmpeg *ffmpeg = static_cast<JdFFmpeg *>(args);
+    ffmpeg->_start();
+    return 0;
+}
+
+
+void JdFFmpeg::start() {
+    //正在播放
+    isPlaying = 1;
+    if (videoChannel) {
+        //设置为工作状态
+        videoChannel->packets.setWork(1);
+        videoChannel->play();
+    }
+
+    pthread_create(&pid_play, 0, task_play, this);
+}
+
+void JdFFmpeg::_start() {
+    //1.读取媒体数据包(音视频数据包)
+    int ret;
+    while (isPlaying) {
+        AVPacket *packet = av_packet_alloc();
+        ret = av_read_frame(formatContext, packet);
+        //=0 成功  其他 失败
+        if (ret == 0) {
+            //stream_index 这一个流的一个序号
+            if (audioChannel && packet->stream_index == audioChannel->id) {
+
+            } else if (videoChannel && packet->stream_index == videoChannel->id) {
+                videoChannel->packets.push(packet);
+            }
+        } else if (ret == AVERROR_EOF) {
+            //读取完成  但是可能还没播放完
+        } else {
+
+        }
+    }
+}
+
+void JdFFmpeg::setRenderFrameCallback(RenderFrameCallback callback) {
+    this->callback = callback;
 }

@@ -1,5 +1,6 @@
 package com.sinochem.player;
 
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -34,7 +35,7 @@ public class JdPlayer implements SurfaceHolder.Callback {
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-
+        native_setSurface(holder.getSurface());
     }
 
     @Override
@@ -58,7 +59,7 @@ public class JdPlayer implements SurfaceHolder.Callback {
      * 开始播放
      */
     public void start() {
-
+        native_start();
     }
 
     /**
@@ -92,4 +93,7 @@ public class JdPlayer implements SurfaceHolder.Callback {
 
     native void native_prepare(String dataSource);
 
+    native void native_start();
+
+    native void native_setSurface(Surface surface);
 }

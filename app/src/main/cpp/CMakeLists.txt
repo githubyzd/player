@@ -12,7 +12,7 @@ message("DIR----->:${DIR}")
 #指定h文件的目录，编译过程需要找.h文件
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-file(GLOB source_file ${PROJECT_SOURCE_DIR}/*.cpp)
+file(GLOB source_file ${PROJECT_SOURCE_DIR}/*)
 
 add_library(
         native-lib
@@ -20,7 +20,7 @@ add_library(
         ${source_file} )
 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L${DIR}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__STDC_CONSTANT_MACROS -L${DIR}")
 
 #导入FFmpeg的库
 #add_library(libavcodec SHARED IMPORTED)
@@ -56,5 +56,6 @@ target_link_libraries(
         swscale
         avutil
         avcodec
-        z)
+        z
+        android)
 
