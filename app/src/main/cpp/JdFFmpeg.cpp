@@ -7,30 +7,36 @@
 #include "macro.h"
 
 void *task_prepare(void *args) {
+    LOGI("Method start---> JdFFmpeg task_prepare");
     JdFFmpeg *fFmpeg = static_cast<JdFFmpeg *>(args);
     fFmpeg->_prepare();
+    LOGI("Method end---> JdFFmpeg task_prepare");
     return 0;
 }
 
 JdFFmpeg::JdFFmpeg(JavaCallHelper *callHelper, const char *dataSource) {
     this->callHelper = callHelper;
     //防止dataSource参数指向的内存被释放
-    this->dataSource = new char[strlen(dataSource)];
+    //strlen 获得字符串的长度 不包括\0
+    this->dataSource = new char[strlen(dataSource) + 1];
     strcpy(this->dataSource, dataSource);
 }
 
 JdFFmpeg::~JdFFmpeg() {
-//释放
+    //释放
     DELETE(dataSource);
     DELETE(callHelper);
 }
 
 void JdFFmpeg::prepare() {
     //创建一个线程
+    LOGI("Method start---> JdFFmpeg prepare");
     pthread_create(&pid, 0, task_prepare, this);
+    LOGI("Method end---> JdFFmpeg prepare");
 }
 
 void JdFFmpeg::_prepare() {
+    LOGI("Method start---> JdFFmpeg _prepare");
     //初始化网络  让ffmpeg能够使用网络
     avformat_network_init();
     //1.打开媒体地址（文件地址，直播地址）
@@ -59,19 +65,19 @@ void JdFFmpeg::_prepare() {
         //可能代表是一个视频  也可能代表是一个音频
         AVStream *stream = formatContext->streams[i];
         //包含了  解码  这段流 的各种参数信息（宽  高 码率  帧率）
-        AVCodecParameters *codecParameters = stream->codecpar;
+        AVCodecParameters *codecpar = stream->codecpar;
 
         //无论视频还是音频都需要干一些事情（获得解码器）
         //1. 通过 当前流 使用 编码方式，查找编码器
-        AVCodec *codec = avcodec_find_decoder(codecParameters->codec_id);
-        if (codec == NULL) {
+        AVCodec *dec = avcodec_find_decoder(codecpar->codec_id);
+        if (dec == NULL) {
             LOGE("查找解码器失败:%s", av_err2str(ret));
             callHelper->onError(THREAD_CHILD, FFMPEG_FIND_DECODER_FAIL);
             return;
         }
 
         //2.获得解码器上下文
-        AVCodecContext *context = avcodec_alloc_context3(codec);
+        AVCodecContext *context = avcodec_alloc_context3(dec);
         if (context == NULL) {
             LOGE("创建解码器上下文失败:%s", av_err2str(ret));
             callHelper->onError(THREAD_CHILD, FFMPEG_ALLOC_CODEC_CONTEXT_FAIL);
@@ -81,7 +87,7 @@ void JdFFmpeg::_prepare() {
         //3.设置上线文内的一些参数（context->width）
         //context->width = codecParameters->width;
         //context->height = codecParameters->height;
-        ret = avcodec_parameters_to_context(context, codecParameters);
+        ret = avcodec_parameters_to_context(context, codecpar);
         //失败
         if (ret < 0) {
             LOGE("设置解码器上下文参数失败:%s", av_err2str(ret));
@@ -90,16 +96,16 @@ void JdFFmpeg::_prepare() {
         }
 
         //4.打开解码器
-        ret = avcodec_open2(context, codec, 0);
+        ret = avcodec_open2(context, dec, 0);
         if (ret != 0) {
             LOGE("打开解码器失败:%s", av_err2str(ret));
             callHelper->onError(THREAD_CHILD, FFMPEG_OPEN_DECODER_FAIL);
             return;
         }
         //音频
-        if (codecParameters->codec_type == AVMEDIA_TYPE_AUDIO) {
-            audioChannel = new AudioChannel(0, context);
-        } else if (codecParameters->codec_type == AVMEDIA_TYPE_VIDEO) {
+        if (codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+            audioChannel = new AudioChannel(i, context);
+        } else if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
             videoChannel = new VideoChannel(i, context);
             videoChannel->setRenderFrameCallback(callback);
         }
@@ -114,16 +120,20 @@ void JdFFmpeg::_prepare() {
 
     //准备完了  通知java
     callHelper->onPrepare(THREAD_CHILD);
+    LOGI("Method end---> JdFFmpeg _prepare");
 }
 
 void *task_play(void *args) {
+    LOGI("Method start---> JdFFmpeg task_play");
     JdFFmpeg *ffmpeg = static_cast<JdFFmpeg *>(args);
     ffmpeg->_start();
+    LOGI("Method end---> JdFFmpeg task_play");
     return 0;
 }
 
 
 void JdFFmpeg::start() {
+    LOGI("Method start---> JdFFmpeg start");
     //正在播放
     isPlaying = 1;
     if (videoChannel) {
@@ -133,9 +143,11 @@ void JdFFmpeg::start() {
     }
 
     pthread_create(&pid_play, 0, task_play, this);
+    LOGI("Method end---> JdFFmpeg start");
 }
 
 void JdFFmpeg::_start() {
+    LOGI("Method start---> JdFFmpeg _start(");
     //1.读取媒体数据包(音视频数据包)
     int ret;
     while (isPlaying) {
@@ -155,6 +167,7 @@ void JdFFmpeg::_start() {
 
         }
     }
+    LOGI("Method end---> JdFFmpeg _start(");
 }
 
 void JdFFmpeg::setRenderFrameCallback(RenderFrameCallback callback) {

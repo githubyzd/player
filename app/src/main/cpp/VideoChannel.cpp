@@ -6,16 +6,21 @@ extern "C"{
 #include <libavutil/imgutils.h>
 }
 #include "VideoChannel.h"
+#include "macro.h"
 
 void *decode_task(void *args) {
+    LOGI("Method start---> VideoChannel decode_task");
     VideoChannel *channel = static_cast<VideoChannel *>(args);
     channel->decode();
+    LOGI("Method end---> VideoChannel decode_task");
     return 0;
 }
 
 void *render_task(void *args) {
+    LOGI("Method start---> VideoChannel render_task");
     VideoChannel *channel = static_cast<VideoChannel *>(args);
     channel->render();
+    LOGI("Method end---> VideoChannel render_task");
     return 0;
 }
 
@@ -32,15 +37,18 @@ VideoChannel::~VideoChannel() {
 }
 
 void VideoChannel::play() {
+    LOGI("Method start---> VideoChannel play");
     isPlaying = 1;
     //1、解码
     pthread_create(&pid_decode, 0, decode_task, this);
     //2、播放
     pthread_create(&pid_render, 0, render_task, this);
+    LOGI("Method end---> VideoChannel play");
 }
 
 //解码
 void VideoChannel::decode() {
+    LOGI("Method start---> VideoChannel decode");
     AVPacket *packet = 0;
     while (isPlaying) {
         //取出一个数据包
@@ -73,10 +81,12 @@ void VideoChannel::decode() {
         frames.push(frame);
     }
     releaseAvPacket(&packet);
+    LOGI("Method end---> VideoChannel decode");
 }
 
 //播放
 void VideoChannel::render() {
+    LOGI("Method start---> VideoChannel render");
     //目标： RGBA
     swsContext = sws_getContext(
             avCodecContext->width, avCodecContext->height,avCodecContext->pix_fmt,
@@ -105,6 +115,7 @@ void VideoChannel::render() {
     }
     av_freep(&dst_data[0]);
     releaseAvFrame(&frame);
+    LOGI("Method end---> VideoChannel render");
 }
 
 void VideoChannel::setRenderFrameCallback(RenderFrameCallback callback) {

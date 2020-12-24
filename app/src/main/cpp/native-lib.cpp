@@ -26,6 +26,7 @@ Java_com_sinochem_player_MainActivity_stringFromJNI(JNIEnv *env, jobject thiz) {
 
 //画画
 void render(uint8_t *data, int lineszie, int w, int h) {
+    LOGI("Method start---> native-lib render");
     pthread_mutex_lock(&mutex);
     if (!window) {
         pthread_mutex_unlock(&mutex);
@@ -54,6 +55,7 @@ void render(uint8_t *data, int lineszie, int w, int h) {
     }
     ANativeWindow_unlockAndPost(window);
     pthread_mutex_unlock(&mutex);
+    LOGI("Method end---> native-lib render");
 }
 
 extern "C"
@@ -61,26 +63,30 @@ JNIEXPORT void JNICALL
 Java_com_sinochem_player_JdPlayer_native_1prepare(JNIEnv *env, jobject instance,
                                                  jstring dataSource_) {
     const char *dataSource = env->GetStringUTFChars(dataSource_, 0);
+    LOGI("Method start---> native-lib prepare");
     //创建播放器
     JavaCallHelper *helper = new JavaCallHelper(javaVm, env, instance);
     ffmpeg = new JdFFmpeg(helper, dataSource);
     ffmpeg->setRenderFrameCallback(render);
     ffmpeg->prepare();
     env->ReleaseStringUTFChars(dataSource_, dataSource);
+    LOGI("Method end---> native-lib prepare");
 }
 
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_sinochem_player_JdPlayer_native_1start(JNIEnv *env, jobject instance) {
-
+    LOGI("Method start---> native-lib start");
     ffmpeg->start();
+    LOGI("Method end---> native-lib start");
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_sinochem_player_JdPlayer_native_1setSurface(JNIEnv *env, jobject instance,
                                                     jobject surface) {
+    LOGI("Method start---> native-lib setSurface");
     pthread_mutex_lock(&mutex);
     if (window) {
         //把老的释放
@@ -89,4 +95,5 @@ Java_com_sinochem_player_JdPlayer_native_1setSurface(JNIEnv *env, jobject instan
     }
     window = ANativeWindow_fromSurface(env, surface);
     pthread_mutex_unlock(&mutex);
+    LOGI("Method end---> native-lib setSurface");
 }

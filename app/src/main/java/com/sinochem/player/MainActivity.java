@@ -13,6 +13,7 @@ public class MainActivity extends AppCompatActivity {
 
     private SurfaceView surfaceView;
     private JdPlayer player;
+    private String TAG = "MainActivity";
 
     static {
         System.loadLibrary("native-lib");
@@ -32,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
         player.setOnPrepareListener(new JdPlayer.OnPrepareListener() {
             @Override
             public void onPrepare() {
-                Log.e("MainActivity", "准备好了");
+                Log.d(TAG, "准备好了");
                 player.start();
             }
         });

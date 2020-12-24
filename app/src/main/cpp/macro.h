@@ -10,6 +10,8 @@
 
 
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,"FFMPEG",__VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,"FFMPEG",__VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_DEBUG,"FFMPEG",__VA_ARGS__)
 
 //宏函数
 #define DELETE(obj) if(obj){ delete obj; obj = 0; }
