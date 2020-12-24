@@ -13,7 +13,8 @@ extern "C" {
 
 class BaseChannel {
 public:
-    BaseChannel(int id, AVCodecContext *avCodecContext) : id(id), avCodecContext(avCodecContext) {}
+    BaseChannel(int id, AVCodecContext *avCodecContext,AVRational time_base) :
+    id(id), avCodecContext(avCodecContext),time_base(time_base) {}
 
     //virtual
     virtual ~BaseChannel() {
@@ -50,6 +51,10 @@ public:
     SafeQueue<AVPacket *> packets;
     //解码数据包队列
     SafeQueue<AVFrame *> frames;
+
+    AVRational time_base;
+public:
+    double clock;
 };
 
 
