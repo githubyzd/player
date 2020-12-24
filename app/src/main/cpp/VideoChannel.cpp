@@ -28,17 +28,20 @@ void *render_task(void *args) {
 
 VideoChannel::VideoChannel(int id, AVCodecContext *avCodecContext) : BaseChannel(id,
                                                                                  avCodecContext) {
-
     frames.setReleaseCallback(releaseAvFrame);
 }
 
 VideoChannel::~VideoChannel() {
     frames.clear();
+    packets.clear();
 }
 
 void VideoChannel::play() {
     LOGI("Method start---> VideoChannel play");
+    //设置为工作状态
     isPlaying = 1;
+    frames.setWork(1);
+    packets.setWork(1);
     //1、解码
     pthread_create(&pid_decode, 0, decode_task, this);
     //2、播放

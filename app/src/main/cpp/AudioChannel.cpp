@@ -7,4 +7,9 @@ AudioChannel::AudioChannel(int id, AVCodecContext *avCodecContext) :BaseChannel(
 
 }
 
-void AudioChannel::play() {}
+AudioChannel::~AudioChannel() {
+
+}
+void AudioChannel::play() {
+
+}

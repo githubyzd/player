@@ -137,15 +137,20 @@ void JdFFmpeg::start() {
     //正在播放
     isPlaying = 1;
     if (videoChannel) {
-        //设置为工作状态
-        videoChannel->packets.setWork(1);
         videoChannel->play();
+    }
+    //启动声音的解码与播放
+    if (audioChannel){
+        audioChannel->play();
     }
 
     pthread_create(&pid_play, 0, task_play, this);
     LOGI("Method end---> JdFFmpeg start");
 }
 
+/**
+ * 专门读取数据包
+ */
 void JdFFmpeg::_start() {
     LOGI("Method start---> JdFFmpeg _start(");
     //1.读取媒体数据包(音视频数据包)

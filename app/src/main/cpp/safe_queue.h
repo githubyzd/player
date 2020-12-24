@@ -1,5 +1,5 @@
 //
-// Created by liuxiang on 2017/10/15.
+// Created by admin on 2017/10/15.
 //
 
 #ifndef DNRECORDER_SAFE_QUEUE_H
@@ -172,7 +172,6 @@ private:
     int work;
     ReleaseCallback releaseCallback;
     SyncHandle syncHandle;
-
 };
 
 
