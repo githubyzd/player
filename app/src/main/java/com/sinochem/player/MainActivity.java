@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
 
         player = new JdPlayer();
         player.setSurfaceView(surfaceView);
-        player.setDataSource("rtmp://58.200.131.2:1935/livetv/cctv1");
+        player.setDataSource("rtmp://58.200.131.2:1935/livetv/cctv6");
         player.setOnPrepareListener(new JdPlayer.OnPrepareListener() {
             @Override
             public void onPrepare() {

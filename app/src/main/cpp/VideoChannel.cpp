@@ -2,7 +2,7 @@
 // Created by Administrator on 2018/9/5.
 //
 
-extern "C"{
+extern "C" {
 #include <libavutil/imgutils.h>
 #include <libavutil/time.h>
 }
@@ -56,8 +56,8 @@ void dropAvFrame(queue<AVFrame *> &q) {
     }
 }
 
-VideoChannel::VideoChannel(int id, AVCodecContext *avCodecContext,AVRational time_base, int fps) :
-                                                        BaseChannel(id,avCodecContext,time_base) {
+VideoChannel::VideoChannel(int id, AVCodecContext *avCodecContext, AVRational time_base, int fps) :
+        BaseChannel(id, avCodecContext, time_base) {
     this->fps = fps;
     //  用于 设置一个 同步操作 队列的一个函数指针
 //    packets.setSyncHandle(dropAvPacket);
@@ -66,6 +66,7 @@ VideoChannel::VideoChannel(int id, AVCodecContext *avCodecContext,AVRational tim
 
 VideoChannel::~VideoChannel() {
 }
+
 void VideoChannel::setAudioChannel(AudioChannel *audioChannel) {
     this->audioChannel = audioChannel;
 }
@@ -111,7 +112,7 @@ void VideoChannel::decode() {
         //需要更多的数据才能够进行解码
         if (ret == AVERROR(EAGAIN)) {
             continue;
-        } else if(ret != 0){
+        } else if (ret != 0) {
             break;
         }
         //再开一个线程 来播放 (流畅度)
@@ -126,22 +127,22 @@ void VideoChannel::render() {
     LOGI("Method start---> VideoChannel render");
     //目标： RGBA
     swsContext = sws_getContext(
-            avCodecContext->width, avCodecContext->height,avCodecContext->pix_fmt,
-            avCodecContext->width, avCodecContext->height,AV_PIX_FMT_RGBA,
-            SWS_BILINEAR,0,0,0);
-    AVFrame* frame = 0;
+            avCodecContext->width, avCodecContext->height, avCodecContext->pix_fmt,
+            avCodecContext->width, avCodecContext->height, AV_PIX_FMT_RGBA,
+            SWS_BILINEAR, 0, 0, 0);
+    AVFrame *frame = 0;
     //指针数组
     uint8_t *dst_data[4];
     int dst_linesize[4];
     av_image_alloc(dst_data, dst_linesize,
-                   avCodecContext->width, avCodecContext->height,AV_PIX_FMT_RGBA, 1);
+                   avCodecContext->width, avCodecContext->height, AV_PIX_FMT_RGBA, 1);
 
     //每个画面 刷新的间隔 单位：秒
     double frame_delays = 1.0 / fps;
 
-    while (isPlaying){
+    while (isPlaying) {
         int ret = frames.pop(frame);
-        if (!isPlaying){
+        if (!isPlaying) {
             break;
         }
         //src_linesize: 表示每一行存放的 字节长度
@@ -172,25 +173,25 @@ void VideoChannel::render() {
             } else {
                 //比较音频与视频
                 double audioClock = audioChannel->clock;
-                if (audioClock == 0){
+                if (audioClock == 0) {
                     continue;
                 }
                 //间隔 音视频相差的间隔
                 double diff = clock - audioClock;
                 if (diff > 0) {
                     //大于0 表示视频比较快
-                    LOGE("视频快了：%lf",diff);
+                    LOGE("视频快了：%lf", diff);
                     av_usleep((delays + diff) * 1000000);
                 } else if (diff < 0) {
                     //小于0 表示音频比较快
-                    LOGE("音频快了：%lf",diff);
+                    LOGE("音频快了：%lf", diff);
                     // 视频包积压的太多了 （丢包）
                     if (fabs(diff) >= 0.05) {
                         releaseAvFrame(&frame);
                         //丢包
                         frames.sync();
                         continue;
-                    }else{
+                    } else {
                         //不睡了 快点赶上 音频
                     }
                 }
@@ -198,7 +199,7 @@ void VideoChannel::render() {
         }
 #endif
         //回调出去进行播放
-        callback(dst_data[0],dst_linesize[0],avCodecContext->width, avCodecContext->height);
+        callback(dst_data[0], dst_linesize[0], avCodecContext->width, avCodecContext->height);
         releaseAvFrame(&frame);
     }
     av_freep(&dst_data[0]);
