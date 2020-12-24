@@ -154,6 +154,7 @@ void VideoChannel::render() {
 #if 1
         //获得 当前这一个画面 播放的相对的时间
         double clock = frame->best_effort_timestamp * av_q2d(time_base);
+
         //额外的间隔时间
         double extra_delay = frame->repeat_pict / (2 * fps);
         // 真实需要的间隔时间
@@ -171,6 +172,9 @@ void VideoChannel::render() {
             } else {
                 //比较音频与视频
                 double audioClock = audioChannel->clock;
+                if (audioClock == 0){
+                    continue;
+                }
                 //间隔 音视频相差的间隔
                 double diff = clock - audioClock;
                 if (diff > 0) {
