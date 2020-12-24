@@ -162,7 +162,7 @@ void JdFFmpeg::_start() {
         if (ret == 0) {
             //stream_index 这一个流的一个序号
             if (audioChannel && packet->stream_index == audioChannel->id) {
-
+                audioChannel->packets.push(packet);
             } else if (videoChannel && packet->stream_index == videoChannel->id) {
                 videoChannel->packets.push(packet);
             }

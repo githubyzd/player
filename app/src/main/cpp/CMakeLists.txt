@@ -57,5 +57,6 @@ target_link_libraries(
         avutil
         avcodec
         z
-        android)
+        android
+        OpenSLES)
 

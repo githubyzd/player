@@ -46,7 +46,10 @@ public:
     int id;
     AVCodecContext *avCodecContext;
     bool isPlaying;
+    //编码数据包队列
     SafeQueue<AVPacket *> packets;
+    //解码数据包队列
+    SafeQueue<AVFrame *> frames;
 };
 
 

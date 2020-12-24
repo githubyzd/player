@@ -28,12 +28,9 @@ void *render_task(void *args) {
 
 VideoChannel::VideoChannel(int id, AVCodecContext *avCodecContext) : BaseChannel(id,
                                                                                  avCodecContext) {
-    frames.setReleaseCallback(releaseAvFrame);
 }
 
 VideoChannel::~VideoChannel() {
-    frames.clear();
-    packets.clear();
 }
 
 void VideoChannel::play() {
