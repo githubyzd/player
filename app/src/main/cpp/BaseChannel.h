@@ -52,6 +52,22 @@ public:
 
     virtual void play() = 0;
 
+
+    void clear() {
+        packets.clear();
+        frames.clear();
+    }
+
+    void stopWork() {
+        packets.setWork(0);
+        frames.setWork(0);
+    }
+
+    void startWork() {
+        packets.setWork(1);
+        frames.setWork(1);
+    }
+
     int id;
     AVCodecContext *avCodecContext;
     bool isPlaying;
@@ -61,9 +77,11 @@ public:
     SafeQueue<AVFrame *> frames;
 
     AVRational time_base;
+
+
 public:
     double clock;
-    int queueSize = 1000;
+    int queueSize = 100;
 };
 
 

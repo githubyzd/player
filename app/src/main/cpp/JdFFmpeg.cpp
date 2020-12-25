@@ -240,4 +240,46 @@ void JdFFmpeg::stop() {
     callHelper = 0;
     // formatContext
     pthread_create(&pid_stop, 0, aync_stop, this);
-};
+}
+
+
+void JdFFmpeg::seek(int progress) {
+    //进去必须 在0- duration 范围之类
+    if (progress< 0 || progress>= duration) {
+        return;
+    }
+    if (!audioChannel && !videoChannel) {
+        return;
+    }
+    if (!formatContext) {
+        return;
+    }
+
+    isSeek = 1;
+    pthread_mutex_lock(&seekMutex);
+    //单位是 微妙
+    int64_t seek = progress * 1000000;
+
+    //seek到请求的时间 之前最近的关键帧
+    // 只有从关键帧才能开始解码出完整图片
+    av_seek_frame(formatContext, -1,seek, AVSEEK_FLAG_BACKWARD);
+
+    // 音频、与视频队列中的数据 是不是就可以丢掉了？
+    if (audioChannel) {
+        //暂停队列
+        audioChannel->stopWork();
+        //可以清空缓存
+//        avcodec_flush_buffers();
+        audioChannel->clear();
+        //启动队列
+        audioChannel->startWork();
+    }
+
+    if (videoChannel) {
+        videoChannel->stopWork();
+        videoChannel->clear();
+        videoChannel->startWork();
+    }
+    pthread_mutex_unlock(&seekMutex);
+    isSeek = 0;
+}

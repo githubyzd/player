@@ -137,5 +137,8 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_sinochem_player_JdPlayer_native_1seek(JNIEnv *env, jobject thiz, jint progress) {
 
+    if (ffmpeg) {
+        ffmpeg->seek(progress);
+    }
 
 }

@@ -37,6 +37,8 @@ public:
         return duration;
     }
 
+    void seek(int progress);
+
 public:
     char *dataSource;
     pthread_t pid;
@@ -50,9 +52,10 @@ public:
     AudioChannel *audioChannel = 0;
     VideoChannel *videoChannel = 0;
     RenderFrameCallback callback;
-    bool isPlaying;
 
     int duration;
+    bool isPlaying = 0;
+    bool isSeek = 0;
 };
 
 
