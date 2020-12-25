@@ -74,6 +74,19 @@ public class JdPlayer implements SurfaceHolder.Callback {
         native_release();
     }
 
+    public int getDuration() {
+        return native_getDuration();
+    }
+
+    public void seek(int progress) {
+        new Thread() {
+            @Override
+            public void run() {
+                native_seek(progress);
+            }
+        }.start();
+    }
+
 
     public interface OnPrepareListener {
         void onPrepare();
@@ -101,4 +114,8 @@ public class JdPlayer implements SurfaceHolder.Callback {
     native void native_release();
 
     native void native_setSurface(Surface surface);
+
+    private native int native_getDuration();
+
+    private native void native_seek(int progress);
 }

@@ -32,12 +32,18 @@ public:
 
     void setRenderFrameCallback(RenderFrameCallback callback);
 
+
+    int getDuration() {
+        return duration;
+    }
+
 public:
     char *dataSource;
     pthread_t pid;
     pthread_t pid_play;
     pthread_t pid_stop;
 
+    pthread_mutex_t seekMutex;
     AVFormatContext *formatContext = 0;
     JavaCallHelper *callHelper;
 
@@ -45,6 +51,8 @@ public:
     VideoChannel *videoChannel = 0;
     RenderFrameCallback callback;
     bool isPlaying;
+
+    int duration;
 };
 
 

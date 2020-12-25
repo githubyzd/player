@@ -63,7 +63,7 @@ public:
     AVRational time_base;
 public:
     double clock;
-    int queueSize = 500;
+    int queueSize = 1000;
 };
 
 

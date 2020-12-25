@@ -179,11 +179,12 @@ void VideoChannel::render() {
         }else {
             double audioClock = audioChannel ? audioChannel->clock : 0;
             double diff = fabs(clock - audioClock);
-            LOGE("当前和音频比较:%f - %f = %f", clock, audioClock, diff);
+//            LOGE("当前和音频比较:%f - %f = %f", clock, audioClock, diff);
             //允许误差 diff > 0.04 &&
             if (audioChannel) {
                 //如果视频比音频快，延迟差值播放，否则直接播放
                 if (clock > audioClock) {
+                    LOGE("视频快了：%lf",diff);
                     if (diff > 1) {
                         //差的太久了， 那只能慢慢赶 不然就是卡好久
                         av_usleep((delay * 2) * 1000000);
@@ -192,6 +193,7 @@ void VideoChannel::render() {
                         av_usleep((delay + diff) * 1000000);
                     }
                 }else {
+                    LOGE("音频快了：%lf",diff);
                     //音频比视频快
                     //视频慢了 0.05s 已经比较明显了 (丢帧)
                     if (diff > 1) {

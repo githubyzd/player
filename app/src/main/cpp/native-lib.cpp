@@ -123,3 +123,19 @@ Java_com_sinochem_player_JdPlayer_native_1release(JNIEnv *env, jobject thiz) {
     }
     pthread_mutex_unlock(&mutex);
 }
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_sinochem_player_JdPlayer_native_1getDuration(JNIEnv *env, jobject thiz) {
+    if (ffmpeg) {
+        return ffmpeg->getDuration();
+    }
+    return 0;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_sinochem_player_JdPlayer_native_1seek(JNIEnv *env, jobject thiz, jint progress) {
+
+
+}

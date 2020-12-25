@@ -20,11 +20,18 @@ JdFFmpeg::JdFFmpeg(JavaCallHelper *callHelper, const char *dataSource) {
     //strlen 获得字符串的长度 不包括\0
     this->dataSource = new char[strlen(dataSource) + 1];
     strcpy(this->dataSource, dataSource);
+
+    isPlaying = false;
+    duration = 0;
+
+    pthread_mutex_init(&seekMutex, 0);
 }
 
 JdFFmpeg::~JdFFmpeg() {
+    pthread_mutex_destroy(&seekMutex);
     //释放
     DELETE(dataSource);
+    DELETE(callHelper);
 }
 
 void JdFFmpeg::prepare() {
@@ -58,6 +65,9 @@ void JdFFmpeg::_prepare() {
         callHelper->onError(THREAD_CHILD, FFMPEG_CAN_NOT_FIND_STREAMS);
         return;
     }
+
+    //视频时长（单位：微秒us，转换为秒需要除以1000000）
+    duration = formatContext->duration / 1000000;
 
     //nb_streams: 几个流（极端视频/音频）
     for (int i = 0; i < formatContext->nb_streams; ++i) {

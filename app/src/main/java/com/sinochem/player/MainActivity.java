@@ -3,10 +3,14 @@ package com.sinochem.player;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
@@ -26,6 +30,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 public class MainActivity extends AppCompatActivity implements BaseQuickAdapter.OnItemClickListener {
 
     private String TAG = "MainActivity";
@@ -41,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements BaseQuickAdapter.
         recyclerView = findViewById(R.id.recyclerView);
         initView();
         initData();
+        myRequetPermission();
     }
 
     private void initView() {
@@ -86,6 +93,14 @@ public class MainActivity extends AppCompatActivity implements BaseQuickAdapter.
         @Override
         protected void convert(@NonNull BaseViewHolder helper, TvItemBean item) {
             helper.setText(R.id.name, item.getName());
+        }
+    }
+
+    private void myRequetPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE}, 101);
+        }else {
+            Toast.makeText(this,"您已经申请了权限!",Toast.LENGTH_SHORT).show();
         }
     }
 }
