@@ -13,8 +13,8 @@ extern "C" {
 
 class BaseChannel {
 public:
-    BaseChannel(int id, AVCodecContext *avCodecContext,AVRational time_base) :
-    id(id), avCodecContext(avCodecContext),time_base(time_base) {
+    BaseChannel(int id, AVCodecContext *avCodecContext, AVRational time_base) :
+            id(id), avCodecContext(avCodecContext), time_base(time_base) {
         frames.setReleaseCallback(releaseAvFrame);
         packets.setReleaseCallback(releaseAvPacket);
     }
@@ -63,6 +63,7 @@ public:
     AVRational time_base;
 public:
     double clock;
+    int queueSize = 500;
 };
 
 
