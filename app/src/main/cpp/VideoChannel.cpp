@@ -144,6 +144,9 @@ void VideoChannel::render() {
         if (!isPlaying) {
             break;
         }
+        if (!ret){
+            continue;
+        }
         //src_linesize: 表示每一行存放的 字节长度
         sws_scale(swsContext, reinterpret_cast<const uint8_t *const *>(frame->data),
                   frame->linesize, 0,

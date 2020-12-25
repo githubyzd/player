@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class PlayActivity extends AppCompatActivity implements View.OnClickListener {
     private SurfaceView surfaceView;
@@ -46,6 +47,12 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         player.setSurfaceView(surfaceView);
         player.setOnPrepareListener(() -> {
             Log.d(TAG, "准备好了");
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(PlayActivity.this,"开始播放",Toast.LENGTH_LONG).show();
+                }
+            });
             player.start();
         });
     }
@@ -57,6 +64,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
                 player.prepare();
                 break;
             case R.id.pause:
+                player.stop();
                 break;
         }
     }
@@ -65,21 +73,19 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
+        player.prepare();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        player.stop();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         player.release();
-    }
-
-    public void start(View view) {
-        player.prepare();
     }
 
     native String stringFromJNI();

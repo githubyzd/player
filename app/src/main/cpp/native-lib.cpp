@@ -103,23 +103,23 @@ Java_com_sinochem_player_JdPlayer_native_1setSurface(JNIEnv *env, jobject instan
     LOGI("Method end---> native-lib setSurface");
 }
 
-//extern "C"
-//JNIEXPORT void JNICALL
-//Java_com_sinochem_player_JdPlayer_native_1stop(JNIEnv *env, jobject thiz) {
-//    if (ffmpeg) {
-//        ffmpeg->stop();
-//    }
-//    DELETE(helper);
-//}
-//
-//extern "C"
-//JNIEXPORT void JNICALL
-//Java_com_sinochem_player_JdPlayer_native_1release(JNIEnv *env, jobject thiz) {
-//    pthread_mutex_lock(&mutex);
-//    if (window) {
-//        //把老的释放
-//        ANativeWindow_release(window);
-//        window = 0;
-//    }
-//    pthread_mutex_unlock(&mutex);
-//}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_sinochem_player_JdPlayer_native_1stop(JNIEnv *env, jobject thiz) {
+    if (ffmpeg) {
+        ffmpeg->stop();
+    }
+    DELETE(helper);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_sinochem_player_JdPlayer_native_1release(JNIEnv *env, jobject thiz) {
+    pthread_mutex_lock(&mutex);
+    if (window) {
+        //把老的释放
+        ANativeWindow_release(window);
+        window = 0;
+    }
+    pthread_mutex_unlock(&mutex);
+}
