@@ -19,13 +19,17 @@ public:
     VideoChannel(int id, AVCodecContext *avCodecContext, AVRational time_base, int fp);
 
     ~VideoChannel();
-    void setAudioChannel(AudioChannel* audioChannel);
+
+    void setAudioChannel(AudioChannel *audioChannel);
+
     //解码  播放
     void play();
 
     void decode();
 
     void render();
+
+    void stop();
 
     void setRenderFrameCallback(RenderFrameCallback callback);
 

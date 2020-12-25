@@ -14,12 +14,20 @@ extern "C" {
 class BaseChannel {
 public:
     BaseChannel(int id, AVCodecContext *avCodecContext,AVRational time_base) :
-    id(id), avCodecContext(avCodecContext),time_base(time_base) {}
+    id(id), avCodecContext(avCodecContext),time_base(time_base) {
+        frames.setReleaseCallback(releaseAvFrame);
+        packets.setReleaseCallback(releaseAvPacket);
+    }
 
     //virtual
     virtual ~BaseChannel() {
-        packets.setReleaseCallback(BaseChannel::releaseAvPacket);
+        frames.clear();
         packets.clear();
+        if (avCodecContext) {
+            avcodec_close(avCodecContext);
+            avcodec_free_context(&avCodecContext);
+            avCodecContext = 0;
+        }
     }
 
     /**

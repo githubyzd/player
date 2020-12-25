@@ -95,5 +95,9 @@ public class JdPlayer implements SurfaceHolder.Callback {
 
     native void native_start();
 
+//    native void native_stop();
+//
+//    native void native_release();
+
     native void native_setSurface(Surface surface);
 }

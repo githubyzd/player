@@ -15,7 +15,7 @@ extern "C" {
 
 class AudioChannel : public BaseChannel {
 public:
-    AudioChannel(int id, AVCodecContext *avCodecContext,AVRational time_base);
+    AudioChannel(int id, AVCodecContext *avCodecContext, AVRational time_base);
 
     ~AudioChannel();
 
@@ -24,6 +24,8 @@ public:
     void decode();
 
     void _play();
+
+    void stop();
 
     int getPcm();
 

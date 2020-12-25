@@ -130,15 +130,14 @@ void VideoChannel::render() {
             avCodecContext->width, avCodecContext->height, avCodecContext->pix_fmt,
             avCodecContext->width, avCodecContext->height, AV_PIX_FMT_RGBA,
             SWS_BILINEAR, 0, 0, 0);
+    //每个画面 刷新的间隔 单位：秒
+    double frame_delays = 1.0 / fps;
     AVFrame *frame = 0;
     //指针数组
     uint8_t *dst_data[4];
     int dst_linesize[4];
     av_image_alloc(dst_data, dst_linesize,
                    avCodecContext->width, avCodecContext->height, AV_PIX_FMT_RGBA, 1);
-
-    //每个画面 刷新的间隔 单位：秒
-    double frame_delays = 1.0 / fps;
 
     while (isPlaying) {
         int ret = frames.pop(frame);
@@ -204,9 +203,22 @@ void VideoChannel::render() {
     }
     av_freep(&dst_data[0]);
     releaseAvFrame(&frame);
+    isPlaying = 0;
+    sws_freeContext(swsContext);
+    swsContext = 0;
     LOGI("Method end---> VideoChannel render");
 }
 
 void VideoChannel::setRenderFrameCallback(RenderFrameCallback callback) {
     this->callback = callback;
+}
+
+void VideoChannel::stop(){
+    LOGI("Method start---> VideoChannel stop");
+    isPlaying = 0;
+    frames.setWork(0);
+    frames.setWork(0);
+    pthread_join(pid_decode, 0);
+    pthread_join(pid_render, 0);
+    LOGI("Method end---> VideoChannel stop");
 }

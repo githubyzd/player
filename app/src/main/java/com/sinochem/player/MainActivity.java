@@ -29,7 +29,8 @@ public class MainActivity extends AppCompatActivity {
 
         player = new JdPlayer();
         player.setSurfaceView(surfaceView);
-        player.setDataSource("rtmp://58.200.131.2:1935/livetv/cctv6");
+        player.setDataSource("rtmp://58.200.131.2:1935/livetv/cctv1");
+//        player.setDataSource("http://39.135.38.13/PLTV/88888888/224/3221225970/index.m3u8");
         player.setOnPrepareListener(new JdPlayer.OnPrepareListener() {
             @Override
             public void onPrepare() {
@@ -48,13 +49,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        player.stop();
+//        player.stop();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        player.release();
+//        player.release();
     }
 
     public void start(View view) {

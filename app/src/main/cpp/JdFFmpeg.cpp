@@ -25,7 +25,6 @@ JdFFmpeg::JdFFmpeg(JavaCallHelper *callHelper, const char *dataSource) {
 JdFFmpeg::~JdFFmpeg() {
     //释放
     DELETE(dataSource);
-    DELETE(callHelper);
 }
 
 void JdFFmpeg::prepare() {
@@ -107,12 +106,12 @@ void JdFFmpeg::_prepare() {
         AVRational time_base = stream->time_base;
         //音频
         if (codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-            audioChannel = new AudioChannel(i, context,time_base);
+            audioChannel = new AudioChannel(i, context, time_base);
         } else if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
             //帧率： 单位时间内 需要显示多少个图像
             AVRational frame_rate = stream->avg_frame_rate;
             int fps = av_q2d(frame_rate);
-            videoChannel = new VideoChannel(i, context,time_base,fps);
+            videoChannel = new VideoChannel(i, context, time_base, fps);
             videoChannel->setRenderFrameCallback(callback);
         }
     }
@@ -146,7 +145,7 @@ void JdFFmpeg::start() {
         videoChannel->play();
     }
     //启动声音的解码与播放
-    if (audioChannel){
+    if (audioChannel) {
         videoChannel->setAudioChannel(audioChannel);
         audioChannel->play();
     }
@@ -163,6 +162,17 @@ void JdFFmpeg::_start() {
     //1.读取媒体数据包(音视频数据包)
     int ret;
     while (isPlaying) {
+        //读取文件的时候没有网络请求，一下子读完了，可能导致oom
+        //特别是读本地文件的时候 一下子就读完了
+        if (audioChannel && audioChannel->packets.size() > 100) {
+            //10ms
+            av_usleep(1000 * 10);
+            continue;
+        }
+        if (videoChannel && videoChannel->packets.size() > 100) {
+            av_usleep(1000 * 10);
+            continue;
+        }
         AVPacket *packet = av_packet_alloc();
         ret = av_read_frame(formatContext, packet);
         //=0 成功  其他 失败
@@ -175,13 +185,49 @@ void JdFFmpeg::_start() {
             }
         } else if (ret == AVERROR_EOF) {
             //读取完成  但是可能还没播放完
+            if (audioChannel->packets.empty() && audioChannel->frames.empty()
+                && videoChannel->packets.empty() && videoChannel->frames.empty()) {
+                break;
+            }
+            //为什么这里要让它继续循环 而不是sleep
+            //如果是做直播 ，可以sleep
+            //如果要支持点播(播放本地文件） seek 后退
         } else {
 
         }
     }
+    isPlaying = 0;
+    audioChannel->stop();
+    videoChannel->stop();
     LOGI("Method end---> JdFFmpeg _start(");
 }
 
 void JdFFmpeg::setRenderFrameCallback(RenderFrameCallback callback) {
     this->callback = callback;
 }
+
+void *aync_stop(void *args) {
+    JdFFmpeg *ffmpeg = static_cast<JdFFmpeg *>(args);
+    //   等待prepare结束
+    pthread_join(ffmpeg->pid, 0);
+    // 保证 start线程结束
+    pthread_join(ffmpeg->pid_play, 0);
+    DELETE(ffmpeg->videoChannel);
+    DELETE(ffmpeg->audioChannel);
+    // 这时候释放就不会出现问题了
+    if (ffmpeg->formatContext) {
+        //先关闭读取 (关闭fileintputstream)
+        avformat_close_input(&ffmpeg->formatContext);
+        avformat_free_context(ffmpeg->formatContext);
+        ffmpeg->formatContext = 0;
+    }
+    DELETE(ffmpeg);
+    return 0;
+}
+
+void JdFFmpeg::stop() {
+    isPlaying = 0;
+    callHelper = 0;
+    // formatContext
+    pthread_create(&pid_stop, 0, aync_stop, this);
+};

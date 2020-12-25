@@ -34,7 +34,10 @@ AudioChannel::AudioChannel(int id, AVCodecContext *avCodecContext,AVRational tim
 }
 
 AudioChannel::~AudioChannel() {
-
+    if(data){
+        free(data);
+        data = 0;
+    }
 }
 
 void AudioChannel::play() {
@@ -133,6 +136,7 @@ int AudioChannel::getPcm() {
     // 获得 相对播放这一段数据的秒数
     clock = frame->pts * av_q2d(time_base);
 
+    releaseAvFrame(&frame);
     LOGI("Method end---> AudioChannel getPcm");
     return data_size;
 }
@@ -231,5 +235,40 @@ void AudioChannel::_play() {
      */
     bqPlayerCallback(bqPlayerBufferQueueInterface, this);
     LOGI("Method end---> AudioChannel _play");
+}
+
+void AudioChannel::stop() {
+    LOGI("Method start---> AudioChannel stop");
+    isPlaying = 0;
+    packets.setWork(0);
+    frames.setWork(0);
+    pthread_join(pid_audio_decode,0);
+    pthread_join(pid_audio_play,0);
+    if(swrContext){
+        swr_free(&swrContext);
+        swrContext = 0;
+    }
+
+    //释放播放器
+    if(bqPlayerObject){
+        (*bqPlayerObject)->Destroy(bqPlayerObject);
+        bqPlayerObject = 0;
+        bqPlayerInterface = 0;
+        bqPlayerBufferQueueInterface = 0;
+    }
+
+    //释放混音器
+    if(outputMixObject){
+        (*outputMixObject)->Destroy(outputMixObject);
+        outputMixObject = 0;
+    }
+
+    //释放引擎
+    if(engineObject){
+        (*engineObject)->Destroy(engineObject);
+        engineObject = 0;
+        engineInterface = 0;
+    }
+    LOGI("Method end---> AudioChannel stop");
 }
 

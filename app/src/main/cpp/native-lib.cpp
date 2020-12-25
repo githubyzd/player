@@ -3,6 +3,7 @@
 #include "JavaCallHelper.h"
 #include <android/native_window_jni.h>
 #include "macro.h"
+
 extern "C" {
 #include <libavcodec/avcodec.h>
 }
@@ -10,6 +11,8 @@ extern "C" {
 JavaVM *javaVm = 0;
 JdFFmpeg *ffmpeg = 0;
 ANativeWindow *window = 0;
+JavaCallHelper *helper = 0;
+
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int JNI_OnLoad(JavaVM *vm, void *r) {
@@ -61,11 +64,11 @@ void render(uint8_t *data, int lineszie, int w, int h) {
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_sinochem_player_JdPlayer_native_1prepare(JNIEnv *env, jobject instance,
-                                                 jstring dataSource_) {
+                                                  jstring dataSource_) {
     const char *dataSource = env->GetStringUTFChars(dataSource_, 0);
     LOGI("Method start---> native-lib prepare");
     //创建播放器
-    JavaCallHelper *helper = new JavaCallHelper(javaVm, env, instance);
+    helper = new JavaCallHelper(javaVm, env, instance);
     ffmpeg = new JdFFmpeg(helper, dataSource);
     ffmpeg->setRenderFrameCallback(render);
     ffmpeg->prepare();
@@ -78,14 +81,16 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_sinochem_player_JdPlayer_native_1start(JNIEnv *env, jobject instance) {
     LOGI("Method start---> native-lib start");
-    ffmpeg->start();
+    if (ffmpeg) {
+        ffmpeg->start();
+    }
     LOGI("Method end---> native-lib start");
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_sinochem_player_JdPlayer_native_1setSurface(JNIEnv *env, jobject instance,
-                                                    jobject surface) {
+                                                     jobject surface) {
     LOGI("Method start---> native-lib setSurface");
     pthread_mutex_lock(&mutex);
     if (window) {
@@ -97,3 +102,24 @@ Java_com_sinochem_player_JdPlayer_native_1setSurface(JNIEnv *env, jobject instan
     pthread_mutex_unlock(&mutex);
     LOGI("Method end---> native-lib setSurface");
 }
+
+//extern "C"
+//JNIEXPORT void JNICALL
+//Java_com_sinochem_player_JdPlayer_native_1stop(JNIEnv *env, jobject thiz) {
+//    if (ffmpeg) {
+//        ffmpeg->stop();
+//    }
+//    DELETE(helper);
+//}
+//
+//extern "C"
+//JNIEXPORT void JNICALL
+//Java_com_sinochem_player_JdPlayer_native_1release(JNIEnv *env, jobject thiz) {
+//    pthread_mutex_lock(&mutex);
+//    if (window) {
+//        //把老的释放
+//        ANativeWindow_release(window);
+//        window = 0;
+//    }
+//    pthread_mutex_unlock(&mutex);
+//}
