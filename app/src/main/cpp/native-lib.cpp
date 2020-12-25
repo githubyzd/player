@@ -22,7 +22,7 @@ int JNI_OnLoad(JavaVM *vm, void *r) {
 
 extern "C"
 JNIEXPORT jstring JNICALL
-Java_com_sinochem_player_MainActivity_stringFromJNI(JNIEnv *env, jobject thiz) {
+Java_com_sinochem_player_PlayActivity_stringFromJNI(JNIEnv *env, jobject thiz) {
     std::string hello = av_version_info();
     return env->NewStringUTF(hello.c_str());
 }

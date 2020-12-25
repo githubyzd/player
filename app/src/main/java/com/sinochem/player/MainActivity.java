@@ -1,7 +1,12 @@
 package com.sinochem.player;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
@@ -9,58 +14,78 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.BaseViewHolder;
+import com.sinochem.player.data.Constant;
+import com.sinochem.player.data.TvItemBean;
 
-    private SurfaceView surfaceView;
-    private JdPlayer player;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity implements BaseQuickAdapter.OnItemClickListener {
+
     private String TAG = "MainActivity";
-
-    static {
-        System.loadLibrary("native-lib");
-    }
+    private RecyclerView recyclerView;
+    private List<TvItemBean> data = new ArrayList<>();
+    private MyAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        surfaceView = findViewById(R.id.surface_view);
-        TextView info = findViewById(R.id.info);
-        info.setText("播放器版本:" + stringFromJNI());
 
-        player = new JdPlayer();
-        player.setSurfaceView(surfaceView);
-        player.setDataSource("rtmp://58.200.131.2:1935/livetv/cctv1");
-//        player.setDataSource("http://39.135.38.13/PLTV/88888888/224/3221225970/index.m3u8");
-        player.setOnPrepareListener(new JdPlayer.OnPrepareListener() {
-            @Override
-            public void onPrepare() {
-                Log.d(TAG, "准备好了");
-                player.start();
+        recyclerView = findViewById(R.id.recyclerView);
+        initView();
+        initData();
+    }
+
+    private void initView() {
+        setTitle("首页");
+        recyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
+        adapter = new MyAdapter(R.layout.item_tv_layout, data);
+        recyclerView.setAdapter(adapter);
+        adapter.setOnItemClickListener(this);
+    }
+
+    private void initData() {
+        try {
+            JSONArray array = new JSONArray(Constant.json);
+            for (int i = 0; i < array.length(); i++) {
+                TvItemBean item = new TvItemBean();
+                JSONObject object = (JSONObject) array.get(i);
+                item.setName(object.optString("title"));
+                item.setUrl(object.optString("url"));
+                data.add(item);
             }
-        });
+            adapter.notifyDataSetChanged();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+        TvItemBean tvItemBean = data.get(position);
+        Intent intent = new Intent(this, PlayActivity.class);
+        intent.putExtra(PlayActivity.TITLE_KEY, tvItemBean.getName());
+        intent.putExtra(PlayActivity.URL_KEY, tvItemBean.getUrl());
+        startActivity(intent);
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-//        player.stop();
-    }
+    private class MyAdapter extends BaseQuickAdapter<TvItemBean, BaseViewHolder> {
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-//        player.release();
-    }
+        public MyAdapter(int layoutResId, @Nullable List<TvItemBean> data) {
+            super(layoutResId, data);
+        }
 
-    public void start(View view) {
-        player.prepare();
+        @Override
+        protected void convert(@NonNull BaseViewHolder helper, TvItemBean item) {
+            helper.setText(R.id.name, item.getName());
+        }
     }
-
-    native String stringFromJNI();
 }
