@@ -3,6 +3,7 @@
 #include "JavaCallHelper.h"
 #include <android/native_window_jni.h>
 #include "macro.h"
+#include "librtmp/rtmp.h"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -24,6 +25,7 @@ extern "C"
 JNIEXPORT jstring JNICALL
 Java_com_sinochem_player_PlayActivity_stringFromJNI(JNIEnv *env, jobject thiz) {
     std::string hello = av_version_info();
+    RTMP_Alloc();
     return env->NewStringUTF(hello.c_str());
 }
 

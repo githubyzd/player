@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10.2)
 project("player")
 
+#引入指定目录下的CMakeLists.txt
+add_subdirectory(${PROJECT_SOURCE_DIR}/librtmp)
 
 message("PROJECT_SOURCE_DIR:${PROJECT_SOURCE_DIR}")
 message("CMAKE_ANDROID_ARCH_ABI:${CMAKE_ANDROID_ARCH_ABI}")
@@ -58,5 +60,6 @@ target_link_libraries(
         avcodec
         z
         android
-        OpenSLES)
+        OpenSLES
+        rtmp)
 
