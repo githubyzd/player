@@ -13,7 +13,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Player">
-        <activity android:name=".PlayActivity"></activity>
+        <activity android:name=".PushActivity"></activity>
+        <activity android:name=".TvListActivity" />
+        <activity android:name=".PlayActivity" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
