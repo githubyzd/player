@@ -114,7 +114,6 @@ public class JdPlayer implements SurfaceHolder.Callback {
      */
     public void onProgress(int progress) {
         if (null != listener) {
-            Log.e("哈哈哈", "" + progress);
             listener.onProgress(progress);
         }
     }
