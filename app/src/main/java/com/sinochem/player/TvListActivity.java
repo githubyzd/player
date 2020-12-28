@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -47,7 +48,7 @@ public class TvListActivity extends AppCompatActivity implements BaseQuickAdapte
     }
 
     private void initView() {
-        setTitle("首页");
+        setTitle("直播列表");
         recyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
         adapter = new MyAdapter(R.layout.item_tv_layout, data);
         recyclerView.setAdapter(adapter);
@@ -95,9 +96,9 @@ public class TvListActivity extends AppCompatActivity implements BaseQuickAdapte
 
     private void myRequetPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE}, 101);
-        }else {
-            Toast.makeText(this,"您已经申请了权限!",Toast.LENGTH_SHORT).show();
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 101);
+        } else {
+            Log.d(TAG, "您已经申请权限");
         }
     }
 }

@@ -56,8 +56,9 @@ void dropAvFrame(queue<AVFrame *> &q) {
     }
 }
 
-VideoChannel::VideoChannel(int id, AVCodecContext *avCodecContext, AVRational time_base, int fps) :
-        BaseChannel(id, avCodecContext, time_base) {
+VideoChannel::VideoChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *avCodecContext,
+                           AVRational time_base, int fps) :
+        BaseChannel(id, javaCallHelper, avCodecContext, time_base) {
     this->fps = fps;
     //  用于 设置一个 同步操作 队列的一个函数指针
 //    packets.setSyncHandle(dropAvPacket);
@@ -149,7 +150,7 @@ void VideoChannel::render() {
         if (!isPlaying) {
             break;
         }
-        if (!ret){
+        if (!ret) {
             continue;
         }
 
@@ -164,19 +165,21 @@ void VideoChannel::render() {
         if ((clock = frame->best_effort_timestamp) == AV_NOPTS_VALUE) {
             clock = 0;
         }
+        //pts 单位就是time_base
+        //av_q2d转为双精度浮点数 乘以 pts 得到pts --- 显示时间:秒
+        clock = clock * av_q2d(time_base);
         //frame->repeat_pict = 当解码时，这张图片需要要延迟多久显示
         //需要求出扩展延时：
-        //extra_delay = repeat_pict / (2*fps) 需要延迟这么久来显示
         double repeat_pict = frame->repeat_pict;
         double extra_delay = repeat_pict / (2 * fps);
 
 
         // 真实需要的间隔时间
         double delay = extra_delay + frame_delay;
-        if (clock == 0){
+        if (clock == 0) {
             //正常播放
             av_usleep(delay * 1000000);
-        }else {
+        } else {
             double audioClock = audioChannel ? audioChannel->clock : 0;
             double diff = fabs(clock - audioClock);
 //            LOGE("当前和音频比较:%f - %f = %f", clock, audioClock, diff);
@@ -184,7 +187,7 @@ void VideoChannel::render() {
             if (audioChannel) {
                 //如果视频比音频快，延迟差值播放，否则直接播放
                 if (clock > audioClock) {
-                    LOGE("视频快了：%lf",diff);
+                    LOGE("视频快了：%lf", diff);
                     if (diff > 1) {
                         //差的太久了， 那只能慢慢赶 不然就是卡好久
                         av_usleep((delay * 2) * 1000000);
@@ -192,8 +195,8 @@ void VideoChannel::render() {
                         //差的不多，尝试一次赶上去
                         av_usleep((delay + diff) * 1000000);
                     }
-                }else {
-                    LOGE("音频快了：%lf",diff);
+                } else {
+                    LOGE("音频快了：%lf", diff);
                     //音频比视频快
                     //视频慢了 0.05s 已经比较明显了 (丢帧)
                     if (diff > 1) {
@@ -207,14 +210,17 @@ void VideoChannel::render() {
                         //不休眠 加快速度赶上去
                     }
                 }
-            }else {
+            } else {
                 //正常播放
                 av_usleep(delay * 1000000);
             }
         }
 
 #endif
-
+        //diff太大了不回调了
+        if (callHelper && audioChannel) {
+            callHelper->onProgress(THREAD_CHILD, clock);
+        }
         //src_linesize: 表示每一行存放的 字节长度
         sws_scale(swsContext, reinterpret_cast<const uint8_t *const *>(frame->data),
                   frame->linesize, 0,
@@ -237,9 +243,10 @@ void VideoChannel::setRenderFrameCallback(RenderFrameCallback callback) {
     this->callback = callback;
 }
 
-void VideoChannel::stop(){
+void VideoChannel::stop() {
     LOGI("Method start---> VideoChannel stop");
     isPlaying = 0;
+    callHelper = 0;
     frames.setWork(0);
     frames.setWork(0);
     pthread_join(pid_decode, 0);

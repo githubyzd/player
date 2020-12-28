@@ -1,5 +1,6 @@
 package com.sinochem.player;
 
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -90,6 +91,8 @@ public class JdPlayer implements SurfaceHolder.Callback {
 
     public interface OnPrepareListener {
         void onPrepare();
+
+        void onProgress(int progress);
     }
 
 
@@ -101,6 +104,18 @@ public class JdPlayer implements SurfaceHolder.Callback {
     public void onPrepare() {
         if (null != listener) {
             listener.onPrepare();
+        }
+    }
+
+    /**
+     * native 回调给java 播放进去的
+     *
+     * @param progress
+     */
+    public void onProgress(int progress) {
+        if (null != listener) {
+            Log.e("哈哈哈", "" + progress);
+            listener.onProgress(progress);
         }
     }
 

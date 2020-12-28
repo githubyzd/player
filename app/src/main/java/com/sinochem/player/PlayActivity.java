@@ -2,13 +2,17 @@ package com.sinochem.player;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,10 +29,14 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     private int progress;
     private boolean isTouch;
     private boolean isSeek;
+    private boolean isLocal = false;
+    private String fileName = "a.mp4";
 
     static {
         System.loadLibrary("native-lib");
     }
+
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,15 +51,23 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     private void initData() {
         Intent intent = getIntent();
         String title = intent.getStringExtra(TITLE_KEY);
-        setTitle(title);
-        String url = intent.getStringExtra(URL_KEY);
-        File file = Environment.getExternalStorageDirectory();
-//        player.setDataSource(file.getAbsolutePath() + "/b.mp4");
-        player.setDataSource(url);
+
+        if (isLocal) {
+            File file = Environment.getExternalStorageDirectory();
+            player.setDataSource(file.getAbsolutePath() + File.separator + fileName);
+            setHeight();
+            setTitle(fileName);
+        } else {
+            String url = intent.getStringExtra(URL_KEY);
+            player.setDataSource(url);
+            setTitle(title);
+        }
     }
+
 
     private void initView() {
         surfaceView = findViewById(R.id.surface_view);
+        progressBar = findViewById(R.id.progress);
         TextView info = findViewById(R.id.info);
         info.setText("播放器版本:" + stringFromJNI());
         findViewById(R.id.play).setOnClickListener(this);
@@ -61,19 +77,45 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
         player = new JdPlayer();
         player.setSurfaceView(surfaceView);
-        player.setOnPrepareListener(() -> {
-            Log.d(TAG, "准备好了");
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(PlayActivity.this, "开始播放", Toast.LENGTH_LONG).show();
-                    int duration = player.getDuration();
-                    if (duration != 0) {
-                        seekBar.setVisibility(View.VISIBLE);
+        player.setOnPrepareListener(new JdPlayer.OnPrepareListener() {
+            @Override
+            public void onPrepare() {
+                Log.d(TAG, "准备好了");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressBar.setVisibility(View.GONE);
+                        Toast.makeText(PlayActivity.this, "开始播放", Toast.LENGTH_LONG).show();
+                        int duration = player.getDuration();
+                        if (duration != 0) {
+                            seekBar.setVisibility(View.VISIBLE);
+                        }
                     }
+                });
+
+                player.start();
+            }
+
+            @Override
+            public void onProgress(int progress) {
+                if (!isTouch) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            int duration = player.getDuration();
+                            //如果是直播
+                            if (duration != 0) {
+                                if (isSeek) {
+                                    isSeek = false;
+                                    return;
+                                }
+                                //更新进度 计算比例
+                                seekBar.setProgress(progress * 100 / duration);
+                            }
+                        }
+                    });
                 }
-            });
-            player.start();
+            }
         });
     }
 
@@ -81,6 +123,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.play:
+                progressBar.setVisibility(View.VISIBLE);
                 player.prepare();
                 break;
             case R.id.pause:
@@ -99,6 +142,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onStop() {
         super.onStop();
+        progressBar.setVisibility(View.VISIBLE);
         player.stop();
     }
 
@@ -127,5 +171,17 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         progress = player.getDuration() * seekBar.getProgress() / 100;
         //进度调整
         player.seek(progress);
+    }
+
+    private void setHeight() {
+        LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) surfaceView.getLayoutParams();
+        layoutParams.height = 0;
+        layoutParams.weight = 1;
+    }
+
+    //dip和px之间的转换
+    public static int dp2px(Context context, float dipValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dipValue * scale + 0.5f);
     }
 }

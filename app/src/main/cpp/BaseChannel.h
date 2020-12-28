@@ -6,6 +6,7 @@
 #define PLAYER_BASECHANNEL_H
 
 #include "safe_queue.h"
+#include "JavaCallHelper.h"
 
 extern "C" {
 #include "libavcodec/avcodec.h"
@@ -13,8 +14,10 @@ extern "C" {
 
 class BaseChannel {
 public:
-    BaseChannel(int id, AVCodecContext *avCodecContext, AVRational time_base) :
-            id(id), avCodecContext(avCodecContext), time_base(time_base) {
+    BaseChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *avCodecContext,
+                AVRational time_base) :
+            id(id), callHelper(javaCallHelper), avCodecContext(avCodecContext),
+            time_base(time_base) {
         frames.setReleaseCallback(releaseAvFrame);
         packets.setReleaseCallback(releaseAvPacket);
     }
@@ -77,6 +80,7 @@ public:
     SafeQueue<AVFrame *> frames;
 
     AVRational time_base;
+    JavaCallHelper *callHelper;
 
 
 public:

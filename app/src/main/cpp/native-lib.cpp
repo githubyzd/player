@@ -110,8 +110,11 @@ JNIEXPORT void JNICALL
 Java_com_sinochem_player_JdPlayer_native_1stop(JNIEnv *env, jobject thiz) {
     if (ffmpeg) {
         ffmpeg->stop();
+        ffmpeg =0;
     }
-    DELETE(helper);
+    if (helper) {
+        DELETE(helper);
+    }
 }
 
 extern "C"

@@ -25,9 +25,9 @@ void *audio_play(void *args) {
     return 0;
 }
 
-AudioChannel::AudioChannel(int id, AVCodecContext *avCodecContext, AVRational time_base)
-        : BaseChannel(id,
-                      avCodecContext, time_base) {
+AudioChannel::AudioChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *avCodecContext,
+                           AVRational time_base)
+        : BaseChannel(id, javaCallHelper, avCodecContext, time_base) {
     out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
     out_samplesize = av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
     out_sample_rate = 44100;
@@ -253,6 +253,7 @@ void AudioChannel::_play() {
 void AudioChannel::stop() {
     LOGI("Method start---> AudioChannel stop");
     isPlaying = 0;
+    callHelper = 0;
     packets.setWork(0);
     frames.setWork(0);
     pthread_join(pid_audio_decode, 0);

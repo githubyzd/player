@@ -53,7 +53,9 @@ void JdFFmpeg::_prepare() {
     //ret不为0表示  打开媒体失败
     if (ret != 0) {
         LOGE("打开媒体失败:%s", av_err2str(ret));
-        callHelper->onError(THREAD_CHILD, FFMPEG_CAN_NOT_OPEN_URL);
+        if (callHelper) {
+            callHelper->onError(THREAD_CHILD, FFMPEG_CAN_NOT_OPEN_URL);
+        }
         return;
     }
 
@@ -62,7 +64,9 @@ void JdFFmpeg::_prepare() {
     //小于0  失败
     if (ret < 0) {
         LOGE("查找流失败:%s", av_err2str(ret));
-        callHelper->onError(THREAD_CHILD, FFMPEG_CAN_NOT_FIND_STREAMS);
+        if (callHelper) {
+            callHelper->onError(THREAD_CHILD, FFMPEG_CAN_NOT_FIND_STREAMS);
+        }
         return;
     }
 
@@ -81,7 +85,9 @@ void JdFFmpeg::_prepare() {
         AVCodec *dec = avcodec_find_decoder(codecpar->codec_id);
         if (dec == NULL) {
             LOGE("查找解码器失败:%s", av_err2str(ret));
-            callHelper->onError(THREAD_CHILD, FFMPEG_FIND_DECODER_FAIL);
+            if (callHelper) {
+                callHelper->onError(THREAD_CHILD, FFMPEG_FIND_DECODER_FAIL);
+            }
             return;
         }
 
@@ -89,7 +95,9 @@ void JdFFmpeg::_prepare() {
         AVCodecContext *context = avcodec_alloc_context3(dec);
         if (context == NULL) {
             LOGE("创建解码器上下文失败:%s", av_err2str(ret));
-            callHelper->onError(THREAD_CHILD, FFMPEG_ALLOC_CODEC_CONTEXT_FAIL);
+            if (callHelper) {
+                callHelper->onError(THREAD_CHILD, FFMPEG_ALLOC_CODEC_CONTEXT_FAIL);
+            }
             return;
         }
 
@@ -100,7 +108,9 @@ void JdFFmpeg::_prepare() {
         //失败
         if (ret < 0) {
             LOGE("设置解码器上下文参数失败:%s", av_err2str(ret));
-            callHelper->onError(THREAD_CHILD, FFMPEG_CODEC_CONTEXT_PARAMETERS_FAIL);
+            if (callHelper) {
+                callHelper->onError(THREAD_CHILD, FFMPEG_CODEC_CONTEXT_PARAMETERS_FAIL);
+            }
             return;
         }
 
@@ -108,7 +118,9 @@ void JdFFmpeg::_prepare() {
         ret = avcodec_open2(context, dec, 0);
         if (ret != 0) {
             LOGE("打开解码器失败:%s", av_err2str(ret));
-            callHelper->onError(THREAD_CHILD, FFMPEG_OPEN_DECODER_FAIL);
+            if (callHelper) {
+                callHelper->onError(THREAD_CHILD, FFMPEG_OPEN_DECODER_FAIL);
+            }
             return;
         }
 
@@ -116,12 +128,12 @@ void JdFFmpeg::_prepare() {
         AVRational time_base = stream->time_base;
         //音频
         if (codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-            audioChannel = new AudioChannel(i, context, time_base);
+            audioChannel = new AudioChannel(i, callHelper, context, time_base);
         } else if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
             //帧率： 单位时间内 需要显示多少个图像
             AVRational frame_rate = stream->avg_frame_rate;
             int fps = av_q2d(frame_rate);
-            videoChannel = new VideoChannel(i, context, time_base, fps);
+            videoChannel = new VideoChannel(i, callHelper, context, time_base, fps);
             videoChannel->setRenderFrameCallback(callback);
         }
     }
@@ -129,12 +141,16 @@ void JdFFmpeg::_prepare() {
     //没有音视频（很少见）
     if (!audioChannel && !videoChannel) {
         LOGE("没有音视频");
-        callHelper->onError(THREAD_CHILD, FFMPEG_NOMEDIA);
+        if (callHelper) {
+            callHelper->onError(THREAD_CHILD, FFMPEG_NOMEDIA);
+        }
         return;
     }
 
     //准备完了  通知java
-    callHelper->onPrepare(THREAD_CHILD);
+    if (callHelper) {
+        callHelper->onPrepare(THREAD_CHILD);
+    }
     LOGI("Method end---> JdFFmpeg _prepare");
 }
 
@@ -238,6 +254,12 @@ void *aync_stop(void *args) {
 void JdFFmpeg::stop() {
     isPlaying = 0;
     callHelper = 0;
+    if (audioChannel) {
+        audioChannel->callHelper = 0;
+    }
+    if (videoChannel) {
+        videoChannel->callHelper = 0;
+    }
     // formatContext
     pthread_create(&pid_stop, 0, aync_stop, this);
 }
@@ -245,7 +267,7 @@ void JdFFmpeg::stop() {
 
 void JdFFmpeg::seek(int progress) {
     //进去必须 在0- duration 范围之类
-    if (progress< 0 || progress>= duration) {
+    if (progress < 0 || progress >= duration) {
         return;
     }
     if (!audioChannel && !videoChannel) {
@@ -262,7 +284,7 @@ void JdFFmpeg::seek(int progress) {
 
     //seek到请求的时间 之前最近的关键帧
     // 只有从关键帧才能开始解码出完整图片
-    av_seek_frame(formatContext, -1,seek, AVSEEK_FLAG_BACKWARD);
+    av_seek_frame(formatContext, -1, seek, AVSEEK_FLAG_BACKWARD);
 
     // 音频、与视频队列中的数据 是不是就可以丢掉了？
     if (audioChannel) {
