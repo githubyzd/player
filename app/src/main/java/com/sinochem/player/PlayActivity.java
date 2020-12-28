@@ -11,6 +11,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
@@ -37,6 +38,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private ProgressBar progressBar;
+    private FrameLayout container;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +70,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     private void initView() {
         surfaceView = findViewById(R.id.surface_view);
         progressBar = findViewById(R.id.progress);
+        container = findViewById(R.id.container);
         TextView info = findViewById(R.id.info);
         info.setText("播放器版本:" + stringFromJNI());
         findViewById(R.id.play).setOnClickListener(this);
@@ -174,9 +177,10 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void setHeight() {
-        LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) surfaceView.getLayoutParams();
+        LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) container.getLayoutParams();
         layoutParams.height = 0;
         layoutParams.weight = 1;
+        container.setLayoutParams(layoutParams);
     }
 
     //dip和px之间的转换
