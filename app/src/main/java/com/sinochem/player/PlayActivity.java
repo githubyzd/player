@@ -30,8 +30,6 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     private int progress;
     private boolean isTouch;
     private boolean isSeek;
-    private boolean isLocal = false;
-    private String fileName = "a.mp4";
 
     static {
         System.loadLibrary("native-lib");
@@ -54,15 +52,13 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         Intent intent = getIntent();
         String title = intent.getStringExtra(TITLE_KEY);
 
-        if (isLocal) {
-            File file = Environment.getExternalStorageDirectory();
-            player.setDataSource(file.getAbsolutePath() + File.separator + fileName);
+
+        String url = intent.getStringExtra(URL_KEY);
+        player.setDataSource(url);
+        setTitle(title);
+
+        if (url.startsWith("/storage")){
             setHeight();
-            setTitle(fileName);
-        } else {
-            String url = intent.getStringExtra(URL_KEY);
-            player.setDataSource(url);
-            setTitle(title);
         }
     }
 
