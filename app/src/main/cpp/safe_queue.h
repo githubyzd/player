@@ -22,6 +22,8 @@ template<typename T>
 class SafeQueue {
     typedef void (*ReleaseCallback)(T *);
 
+    typedef void (*ReleaseCallbackPush)(T &);
+
     typedef void (*SyncHandle)(queue<T> &);
 
 public:
@@ -65,7 +67,7 @@ public:
     }
 
 
-    int pop(T& value) {
+    int pop(T &value) {
         int ret = 0;
 #ifdef C11
         //占用空间相对lock_guard 更大一点且相对更慢一点，但是配合条件必须使用它，更灵活
@@ -129,6 +131,7 @@ public:
         for (int i = 0; i < size; ++i) {
             T value = q.front();
             releaseCallback(&value);
+            releaseCallbackPush(value);
             q.pop();
         }
         pthread_mutex_unlock(&mutex);
@@ -152,6 +155,9 @@ public:
     void setReleaseCallback(ReleaseCallback r) {
         releaseCallback = r;
     }
+    void setReleaseCallbackPush(ReleaseCallbackPush r) {
+        releaseCallbackPush = r;
+    }
 
     void setSyncHandle(SyncHandle s) {
         syncHandle = s;
@@ -171,6 +177,7 @@ private:
     //是否工作的标记 1 ：工作 0：不接受数据 不工作
     int work;
     ReleaseCallback releaseCallback;
+    ReleaseCallbackPush releaseCallbackPush;
     SyncHandle syncHandle;
 };
 

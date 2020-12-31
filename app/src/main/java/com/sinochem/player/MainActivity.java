@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void initView() {
         setTitle("首页");
         findViewById(R.id.tv).setOnClickListener(this);
+        findViewById(R.id.push).setOnClickListener(this);
     }
 
 

@@ -55,6 +55,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
         String url = intent.getStringExtra(URL_KEY);
         player.setDataSource(url);
+//        player.setDataSource("rtmp://120.53.242.105/myapp/mystream");
         setTitle(title);
 
         if (url.startsWith("/storage")){

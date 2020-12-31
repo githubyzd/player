@@ -49,9 +49,9 @@ find_library(
         log-lib
         log)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__STDC_CONSTANT_MACROS -L${DIR}")
 target_link_libraries(
         native-lib
-        ${log-lib}
         avfilter
         avformat
         swresample
@@ -61,5 +61,7 @@ target_link_libraries(
         z
         android
         OpenSLES
-        rtmp)
+        rtmp
+        x264
+        ${log-lib})
 
