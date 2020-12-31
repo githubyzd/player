@@ -112,7 +112,7 @@ JNIEXPORT void JNICALL
 Java_com_sinochem_player_JdPlayer_native_1stop(JNIEnv *env, jobject thiz) {
     if (ffmpeg) {
         ffmpeg->stop();
-        ffmpeg =0;
+        ffmpeg = 0;
     }
     if (helper) {
         DELETE(helper);
@@ -202,38 +202,35 @@ void *start(void *args) {
     do {
         rtmp = RTMP_Alloc();
         if (!rtmp) {
-            LOGE("rtmp创建失败");
+            LOGE("alloc rtmp失败");
             break;
         }
         RTMP_Init(rtmp);
-        //设置超时时间 5s
-        rtmp->Link.timeout = 5;
         int ret = RTMP_SetupURL(rtmp, url);
         if (!ret) {
-            LOGE("rtmp设置地址失败:%s", url);
+            LOGE("设置地址失败:%s", url);
             break;
         }
-        //开启输出模式
+        //5s超时时间
+        rtmp->Link.timeout = 5;
         RTMP_EnableWrite(rtmp);
         ret = RTMP_Connect(rtmp, 0);
         if (!ret) {
-            LOGE("rtmp连接地址失败:%s", url);
+            LOGE("连接服务器:%s", url);
             break;
         }
         ret = RTMP_ConnectStream(rtmp, 0);
         if (!ret) {
-            LOGE("rtmp连接流失败:%s", url);
+            LOGE("连接流:%s", url);
             break;
         }
-
-        //准备好了 可以开始推流了
-        readyPushing = 1;
-        //记录一个开始推流的时间
+        //记录一个开始时间
         start_time = RTMP_GetTime();
+        //表示可以开始推流了
+        readyPushing = 1;
         packets.setWork(1);
         RTMPPacket *packet = 0;
-        //循环从队列取包 然后发送
-        while (isStart) {
+        while (readyPushing) {
             packets.pop(packet);
             if (!isStart) {
                 break;
@@ -241,23 +238,31 @@ void *start(void *args) {
             if (!packet) {
                 continue;
             }
-            // 给rtmp的流id
             packet->m_nInfoField2 = rtmp->m_stream_id;
-            //发送包 1:加入队列发送
+            //发送rtmp包 1：队列
+            // 意外断网？发送失败，rtmpdump 内部会调用RTMP_Close
+            // RTMP_Close 又会调用 RTMP_SendPacket
+            // RTMP_SendPacket  又会调用 RTMP_Close
+            // 将rtmp.c 里面WriteN方法的 Rtmp_Close注释掉
             ret = RTMP_SendPacket(rtmp, packet, 1);
             releasePackets(packet);
             if (!ret) {
-                LOGE("发送数据失败");
+                LOGE("发送失败");
                 break;
             }
         }
         releasePackets(packet);
     } while (0);
+    //
+    isStart = 0;
+    readyPushing = 0;
+    packets.setWork(0);
+    packets.clear();
     if (rtmp) {
         RTMP_Close(rtmp);
         RTMP_Free(rtmp);
     }
-    delete url;
+    delete (url);
     return 0;
 }
 
@@ -292,9 +297,12 @@ Java_com_sinochem_player_live_LivePusher_native_1pushVideo(JNIEnv *env, jobject 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_sinochem_player_live_LivePusher_native_1stop(JNIEnv *env, jobject thiz) {
-    // TODO: implement native_stop()
-}extern "C"
+    readyPushing = 0;
+    pthread_join(pid, 0);
+}
+
+extern "C"
 JNIEXPORT void JNICALL
 Java_com_sinochem_player_live_LivePusher_native_1release(JNIEnv *env, jobject thiz) {
-    // TODO: implement native_release()
+    DELETE(videoChannel);
 }
