@@ -159,6 +159,7 @@ pthread_t pid;
 int readyPushing = 0;
 uint32_t start_time;
 
+
 void releasePackets(RTMPPacket *&packet) {
     if (packet) {
         RTMPPacket_Free(packet);
@@ -169,6 +170,7 @@ void releasePackets(RTMPPacket *&packet) {
 
 void callback(RTMPPacket *packet) {
     if (packet) {
+        //设置时间戳
         packet->m_nTimeStamp = RTMP_GetTime() - start_time;
         packets.push(packet);
     }
@@ -187,8 +189,8 @@ Java_com_sinochem_player_live_LivePusher_native_1init(JNIEnv *env, jobject insta
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_sinochem_player_live_LivePusher_native_1setVideoEncInfo(JNIEnv *env, jobject instance,
-                                                                 jint width, jint height, jint fps,
-                                                                 jint bitrate) {
+                                                                jint width, jint height, jint fps,
+                                                                jint bitrate) {
 
     if (videoChannel) {
         videoChannel->setVideoEncInfo(width, height, fps, bitrate);
@@ -269,15 +271,14 @@ void *start(void *args) {
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_sinochem_player_live_LivePusher_native_1start(JNIEnv *env, jobject instance,
-                                                       jstring path_) {
+                                                      jstring path_) {
     if (isStart) {
         return;
     }
+    isStart = 1;
     const char *path = env->GetStringUTFChars(path_, 0);
     char *url = new char[strlen(path) + 1];
     strcpy(url, path);
-    isStart = 1;
-    //启动线程
     pthread_create(&pid, 0, start, url);
     env->ReleaseStringUTFChars(path_, path);
 }
@@ -285,7 +286,7 @@ Java_com_sinochem_player_live_LivePusher_native_1start(JNIEnv *env, jobject inst
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_sinochem_player_live_LivePusher_native_1pushVideo(JNIEnv *env, jobject instance,
-                                                           jbyteArray data_) {
+                                                          jbyteArray data_) {
     if (!videoChannel || !readyPushing) {
         return;
     }
@@ -296,13 +297,13 @@ Java_com_sinochem_player_live_LivePusher_native_1pushVideo(JNIEnv *env, jobject 
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_sinochem_player_live_LivePusher_native_1stop(JNIEnv *env, jobject thiz) {
+Java_com_sinochem_player_live_LivePusher_native_1stop(JNIEnv *env, jobject instance) {
     readyPushing = 0;
     pthread_join(pid, 0);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_sinochem_player_live_LivePusher_native_1release(JNIEnv *env, jobject thiz) {
+Java_com_sinochem_player_live_LivePusher_native_1release(JNIEnv *env, jobject instance) {
     DELETE(videoChannel);
 }
