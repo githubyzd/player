@@ -17,7 +17,6 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 public class PushActivity extends AppCompatActivity implements View.OnClickListener {
 
-    // Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("native-lib");
     }
