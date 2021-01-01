@@ -44,9 +44,10 @@ public class PushActivity extends AppCompatActivity implements View.OnClickListe
 
     private void myRequetPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PERMISSION_GRANTED) {
+                ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE
-                    , Manifest.permission.CAMERA}, 101);
+                    , Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO}, 101);
         } else {
             Log.d("MainActivity", "您已经申请权限");
         }

@@ -63,5 +63,6 @@ target_link_libraries(
         OpenSLES
         rtmp
         x264
+        faac
         ${log-lib})
 

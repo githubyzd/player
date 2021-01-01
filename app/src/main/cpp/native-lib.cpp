@@ -6,6 +6,8 @@
 #include "librtmp/rtmp.h"
 #include <jni.h>
 #include "VideoPushChannel.h"
+#include "AudioPushChannel.h"
+
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -160,6 +162,8 @@ int readyPushing = 0;
 uint32_t start_time;
 
 
+AudioPushChannel *audioChannel = 0;
+
 void releasePackets(RTMPPacket *&packet) {
     if (packet) {
         RTMPPacket_Free(packet);
@@ -182,6 +186,8 @@ Java_com_sinochem_player_live_LivePusher_native_1init(JNIEnv *env, jobject insta
     //准备一个Video编码器的工具类 ：进行编码
     videoChannel = new VideoPushChannel;
     videoChannel->setVideoCallback(callback);
+    audioChannel = new AudioPushChannel;
+    audioChannel->setAudioCallback(callback);
     //准备一个队列,打包好的数据 放入队列，在线程中统一的取出数据再发送给服务器
     packets.setReleaseCallbackPush(releasePackets);
 }
@@ -231,10 +237,12 @@ void *start(void *args) {
         //表示可以开始推流了
         readyPushing = 1;
         packets.setWork(1);
+        //保证第一个数据是 aac解码数据包
+        callback(audioChannel->getAudioTag());
         RTMPPacket *packet = 0;
         while (readyPushing) {
             packets.pop(packet);
-            if (!isStart) {
+            if (!readyPushing) {
                 break;
             }
             if (!packet) {
@@ -299,6 +307,8 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_sinochem_player_live_LivePusher_native_1stop(JNIEnv *env, jobject instance) {
     readyPushing = 0;
+    //关闭队列工作
+    packets.setWork(0);
     pthread_join(pid, 0);
 }
 
@@ -306,4 +316,40 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_sinochem_player_live_LivePusher_native_1release(JNIEnv *env, jobject instance) {
     DELETE(videoChannel);
+    DELETE(audioChannel);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_sinochem_player_live_LivePusher_native_1setAudioEncInfo(JNIEnv *env, jobject instance,
+                                                                jint sampleRateInHz,
+                                                                jint channels) {
+    if (audioChannel) {
+        audioChannel->setAudioEncInfo(sampleRateInHz, channels);
+    }
+
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_sinochem_player_live_LivePusher_getInputSamples(JNIEnv *env, jobject instance) {
+
+    if (audioChannel) {
+        return audioChannel->getInputSamples();
+    }
+    return -1;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_sinochem_player_live_LivePusher_native_1pushAudio(JNIEnv *env, jobject instance,
+                                                          jbyteArray data_) {
+
+    if (!audioChannel || !readyPushing) {
+        return;
+    }
+    jbyte *data = env->GetByteArrayElements(data_, NULL);
+    audioChannel->encodeData(data);
+    env->ReleaseByteArrayElements(data_, data, 0);
+
 }
